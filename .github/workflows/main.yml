@@ -1,0 +1,33 @@
+name: Record livestream
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          pip install -U yt-dlp
+
+      - name: Record stream
+        continue-on-error: true
+        run: |
+          yt-dlp --live-from-start --wait-for-video 60 \
+            -f "bv*[height<=720]+ba/b[height<=720]" \
+            --merge-output-format mp4 \
+            -o "graduation.%(ext)s" \
+            "https://www.youtube.com/watch?v=rKP1cSgKngY"
+
+      - name: Upload recording
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graduation
+          path: graduation.*
+          retention-days: 7
